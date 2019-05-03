@@ -1,0 +1,21 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#edc"
+>
+
+    <ListView
+            android:layout_width="match_parent"
+            android:layout_height="647dp"
+            android:id="@+id/listview"
+
+    />
+    <android.support.design.widget.FloatingActionButton
+            android:layout_width="114dp"
+            android:layout_height="77dp"
+            android:background="@dr"
+
+
+    />
+</LinearLayout>
