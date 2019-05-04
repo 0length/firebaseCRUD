@@ -6,9 +6,12 @@ import android.app.Activity
 import android.app.ProgressDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Binder
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -19,7 +22,8 @@ import com.bumptech.glide.Glide
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import kotlinx.android.synthetic.main.upload_photo.image
-import kotlinx.android.synthetic.main.upload_photo2.*
+import java.io.IOException
+import java.util.*
 
 class UploadActTwo : AppCompatActivity() {
 
@@ -41,6 +45,8 @@ class UploadActTwo : AppCompatActivity() {
         btnChoose = findViewById(R.id.choose)
         btnUpload = findViewById(R.id.upload)
         imgView = findViewById(R.id.image)
+        storage = FirebaseStorage.getInstance()
+        storageReference = storage.reference
 
             btnChoose.setOnClickListener {
             when{
@@ -82,13 +88,19 @@ class UploadActTwo : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != Activity.RESULT_OK){
-            return
+        if (resultCode ==  Activity.RESULT_OK&&data != null&& data.data != null){
+            filePath = data.data
+            try {
+                var bitmap : Bitmap = MediaStore.Images.Media.getBitmap(contentResolver, filePath)
+                imgView.setImageBitmap(bitmap)
+            }catch (e: IOException){
+                e.printStackTrace()
+            }
         }
         when (requestCode){
             PICK_IMAGE_REQUEST -> {
                 filePath = data!!.getData()
-                //uploadFile()
+//                uploadFile()
                 Toast.makeText(this@UploadActTwo, "File "+filePath+" selected", Toast.LENGTH_SHORT).show()
             }
         }
@@ -101,11 +113,9 @@ class UploadActTwo : AppCompatActivity() {
             setCanceledOnTouchOutside(false)
             show()
         }
-        val data = FirebaseStorage.getInstance()
-        var value = 0.0
-        var storage = data.getReference()
-        storage.child("mypic.jpg")
-            .putFile(filePath)
+       var ref : StorageReference =
+               storageReference.child("images/"+ UUID.randomUUID().toString())
+            ref.putFile(filePath)
             .addOnProgressListener {
                     taskSnapshot ->
                 value = (100.0 * taskSnapshot.bytesTransferred)/ taskSnapshot
@@ -114,14 +124,15 @@ class UploadActTwo : AppCompatActivity() {
                 progress.setMessage("Upload.." + value.toInt() + "%")
             }
             .addOnSuccessListener {
-                    taskSnapshot ->
+                    taskSnapshot -> progress.dismiss()
+                Toast.makeText(this@UploadActTwo, "Uploaded", Toast.LENGTH_SHORT).show()
                 progress.dismiss()
                 val uri = taskSnapshot.storage.downloadUrl
                 Log.v("Download File", "File.." +uri)
                 Glide.with(this@UploadActTwo).load(uri).into(image)
             }.addOnFailureListener {
-                    exception -> exception
-                .printStackTrace()
+                    e -> progress.dismiss()
+                        Toast.makeText(this@UploadActTwo, "Upload Failed"+ e.message, Toast.LENGTH_SHORT).show()
             }
     }
 }
