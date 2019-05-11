@@ -58,7 +58,7 @@ class MainMessage : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListe
     private val REQUEST_INVITE = 1
     private val REQUEST_IMAGE = 2
     private val LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif"
-    val ANONYMOUS = "antonymous"
+    val ANONYMOUS = "anonymous"
     private var mUsername:String? = null
     private var mPhotoUrl:String? = null
     private var mSharedPreferences : SharedPreferences? = null
@@ -115,14 +115,14 @@ class MainMessage : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListe
                 return  MessageViewHolder(inflater.inflate(R.layout.item_message, viewGroup, false))
             }
 
-            override fun onBindViewHolder(viewHolder: MessageViewHolder, position: Int, friendllyMessage: FriendlyMessage) {
+            override fun onBindViewHolder(viewHolder: MessageViewHolder, position: Int, friendlyMessage: FriendlyMessage) {
                 mProgressBar!!.visibility = ProgressBar.INVISIBLE
-                if (friendllyMessage.getText() != null) {
-                    viewHolder.messageTextView.text = friendllyMessage.getText()
+                if (friendlyMessage.getText() != null) {
+                    viewHolder.messageTextView.text = friendlyMessage.getText()
                     viewHolder.messageTextView.visibility = TextView.VISIBLE
                     viewHolder.messageImageView.visibility = ImageView.GONE
-                } else if (friendllyMessage.getImageUrl() != null) {
-                    val imageUrl = friendllyMessage.getImageUrl()
+                } else if (friendlyMessage.getImageUrl() != null) {
+                    val imageUrl = friendlyMessage.getImageUrl()
                     if (imageUrl!!.startsWith("gs://")) {
                         val storageReference = FirebaseStorage.getInstance()
                             .getReferenceFromUrl(imageUrl)
@@ -140,14 +140,14 @@ class MainMessage : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListe
                         }
                     } else {
                         Glide.with(viewHolder.messageImageView.context)
-                            .load(friendllyMessage.getImageUrl()!!)
+                            .load(friendlyMessage.getImageUrl()!!)
                             .into(viewHolder.messageImageView)
                     }
                     viewHolder.messageImageView.visibility = ImageView.VISIBLE
                     viewHolder.messageTextView.visibility = TextView.GONE
                 }
-                viewHolder.messegerTextView.text = friendllyMessage.getName()
-                if (friendllyMessage.getPhotoUrl() == null) {
+                viewHolder.messegerTextView.text = friendlyMessage.getName()
+                if (friendlyMessage.getImageUrl() == null) {
                     viewHolder.messageImageView.setImageDrawable(
                         ContextCompat.getDrawable(
                             this@MainMessage,
@@ -156,7 +156,7 @@ class MainMessage : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListe
                     )
                 } else {
                     Glide.with(this@MainMessage)
-                        .load(friendllyMessage.getPhotoUrl())
+                        .load(friendlyMessage.getImageUrl())
                         .into(viewHolder.messageImageView)
                     }
                 }
@@ -323,22 +323,22 @@ class MainMessage : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListe
             }
         }
     }
-    override fun putImageInStorage(storageReference: StorageReference, uri: Uri, key : String?){
+    private fun putImageInStorage(storageReference: StorageReference, uri: Uri, key : String?){
         storageReference.putFile(uri!!)
-            .addOnCompleteListener(this@MainMessage, object : OnCompletListener<UploadTask.TaskSnapshot>{
+            .addOnCompleteListener(this@MainMessage, object : OnCompleteListener<UploadTask.TaskSnapshot>{
                 override fun onComplete(task : Task<UploadTask.TaskSnapshot>){
                     if (task.isSuccessful){
                         task.result!!.metadata!!
                             .reference!!.downloadUrl
                             .addOnCompleteListener(this@MainMessage, object : OnCompleteListener<Uri>{
-                                override fun onComplete(p0: Task<Uri>) {
+                                override fun onComplete(task: Task<Uri>) {
                                     if (task.isSuccessful){
                                         val frendlyMessenger = FriendlyMessage(
                                             null, mUsername!!, mPhotoUrl!!, task.result!!.toString()
                                         )
                                         mFirebaseDatabaseReference!!
                                             .child(MESSAGES_CHILD).child(key!!)
-                                            .setValue(friendlyMessage)
+                                            .setValue(frendlyMessenger)
                                     }
                                 }
                             })
